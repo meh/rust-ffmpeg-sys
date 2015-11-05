@@ -11,7 +11,7 @@ repository  = "https://github.com/meh/rust-ffmpeg-sys"
 keywords    = ["audio", "video"]
 
 [dependencies]
-libc = "*"
+libc = "0.2"
 
 [features]
 default  = ["avcodec", "avdevice", "avfilter", "avformat", "avresample", "swresample", "swscale"]
