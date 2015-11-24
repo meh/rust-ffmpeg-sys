@@ -1,4 +1,5 @@
-use libc::{c_void, c_char, c_int, uint8_t, int64_t, uint64_t};
+use libc::{c_void, c_char, c_short, c_int, int8_t, uint8_t};
+use libc::{int16_t, uint32_t, int64_t, uint64_t};
 use super::dict::AVDictionary;
 use super::rational::AVRational;
 use super::buffer::AVBufferRef;
@@ -49,10 +50,10 @@ pub struct AVFrame {
 	pub format: c_int,
 	pub key_frame: c_int,
 	pub pict_type: AVPictureType,
-	pub sample_aspect_ratio: AVRational,
 
 	pub base: [*mut uint8_t; AV_NUM_DATA_POINTERS],
 
+	pub sample_aspect_ratio: AVRational,
 	pub pts: int64_t,
 	pub pkt_pts: int64_t,
 	pub pkt_dts: int64_t,
@@ -62,8 +63,20 @@ pub struct AVFrame {
 
 	pub quality: c_int,
 
+	pub reference: c_int,
+	pub qscale_table: *mut int8_t,
+	pub qstride: c_int,
+	pub qscale_type: c_int,
+	pub mbskip_table: *mut uint8_t,
+	pub motion_val: [*mut [int16_t; 2]; 2],
+	pub mb_type: *mut uint32_t,
+	pub dct_coeff: *mut c_short,
+	pub ref_index: [*mut int8_t; 2],
+
 	pub opaque: *mut c_void,
-	pub error: [uint8_t; AV_NUM_DATA_POINTERS],
+	pub error: [uint64_t; AV_NUM_DATA_POINTERS],
+
+	pub typ: c_int,
 
 	pub repeat_pict: c_int,
 	pub interlaced_frame: c_int,
@@ -71,7 +84,16 @@ pub struct AVFrame {
 
 	pub palette_has_changed: c_int,
 
+	pub buffer_hints: c_int,
+	pub pan_scan: *mut c_void,
+
 	pub reordered_opaque: int64_t,
+
+	pub hwaccel_picture_private: *mut c_void,
+	pub owner: *mut c_void,
+	pub thread_opaque: *mut c_void,
+	pub motion_subsample_log2: uint8_t,
+
 	pub sample_rate: c_int,
 	pub channel_layout: uint64_t,
 
