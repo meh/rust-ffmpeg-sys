@@ -926,7 +926,7 @@ pub struct AVCodecContext {
 	pub log_level_offset: c_int,
 	pub codec_type: AVMediaType,
 	pub codec: *const AVCodec,
-	#[cfg(feature = "ff_api_codec_name")]
+	#[cfg(any(feature="ff_api_codec_name", not(feature="ff_api_codec_name_is_defined")))]
 	pub codec_name: [c_char; 32],
 	pub codec_id: AVCodecID,
 	pub codec_tag: c_uint,
@@ -935,7 +935,13 @@ pub struct AVCodecContext {
 	pub priv_data: *mut c_void,
 	pub internal: *mut AVCodecInternal,
 	pub opaque: *mut c_void,
+
+	// See https://github.com/FFmpeg/FFmpeg/commit/7404f3bdb90e6a5dcb59bc0a091e2c5c038e557d
+	#[cfg(feature="avcodec_version_greater_than_57_1")]
 	pub bit_rate: int64_t,
+	#[cfg(not(feature="avcodec_version_greater_than_57_1"))]
+	pub bit_rate: c_int,
+
 	pub bit_rate_tolerance: c_int,
 	pub global_quality: c_int,
 	pub compression_level: c_int,
@@ -960,6 +966,7 @@ pub struct AVCodecContext {
 	pub b_quant_factor: c_float,
 	#[cfg(feature = "ff_api_rc_strategy")]
 	pub rc_strategy: c_int,
+	#[cfg(feature = "ff_api_private_opt")]
 	pub b_frame_strategy: c_int,
 	pub b_quant_offset: c_float,
 	pub has_b_frames: c_int,
