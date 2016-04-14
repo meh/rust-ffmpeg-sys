@@ -342,8 +342,21 @@ fn check_features(infos: &Vec<(&'static str, Option<&'static str>, &'static str)
 }
 
 fn main() {
+
 	if env::var("CARGO_FEATURE_BUILD").is_ok() {
+		macro_rules! link_native {
+			($feat_name:expr, $lib_name:expr) => (
+				if env::var(concat!("CARGO_FEATURE_BUILD_", $feat_name)).is_ok() {
+					println!("cargo:rustc-link-lib={}", $lib_name);
+				}
+			)
+		}
+
 		println!("cargo:rustc-link-search=native={}", search().join("lib").to_string_lossy());
+
+		if env::var("CARGO_FEATURE_ZLIB").is_ok() && cfg!(target_os = "linux") {
+			println!("cargo:rustc-link-lib=z");
+		}
 
 		if env::var("CARGO_FEATURE_BUILD_ZLIB").is_ok() && cfg!(target_os = "linux") {
 			println!("cargo:rustc-link-lib=z");
