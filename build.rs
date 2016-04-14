@@ -103,6 +103,8 @@ fn build() -> io::Result<()> {
 	// do not build programs since we don't need them
 	configure.arg("--disable-programs");
 
+	configure.arg("--enable-pic");
+
 	macro_rules! switch {
 		($conf:expr, $feat:expr, $name:expr) => (
 			if env::var(concat!("CARGO_FEATURE_", $feat)).is_ok() {
