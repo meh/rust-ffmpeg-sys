@@ -103,8 +103,6 @@ fn build() -> io::Result<()> {
 	// do not build programs since we don't need them
 	configure.arg("--disable-programs");
 
-	configure.arg("--enable-pic");
-
 	macro_rules! switch {
 		($conf:expr, $feat:expr, $name:expr) => (
 			if env::var(concat!("CARGO_FEATURE_", $feat)).is_ok() {
@@ -202,6 +200,9 @@ fn build() -> io::Result<()> {
 	// configure external protocols
 	enable!(configure, "BUILD_LIB_SMBCLIENT", "libsmbclient");
 	enable!(configure, "BUILD_LIB_SSH", "libssh");
+
+	// configure misc build options
+	enable!(configure, "PIC", "pic");
 
 	// run ./configure
 	if !try!(configure.status()).success() {
@@ -339,7 +340,10 @@ fn check_features(infos: &Vec<(&'static str, Option<&'static str>, &'static str)
 fn main() {
 	if env::var("CARGO_FEATURE_BUILD").is_ok() {
 		println!("cargo:rustc-link-search=native={}", search().join("lib").to_string_lossy());
-		println!("cargo:rustc-link-lib=z");
+
+		if env::var("CARGO_FEATURE_ZLIB").is_ok() && cfg!(target_os = "linux") {
+			println!("cargo:rustc-link-lib=z");
+		}
 
 		if fs::metadata(&search().join("lib").join("libavutil.a")).is_ok() {
 			return;

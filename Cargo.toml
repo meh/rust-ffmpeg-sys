@@ -85,3 +85,7 @@ avresample = []
 postproc   = []
 swresample = []
 swscale    = []
+
+# misc build options
+pic        = []
+zlib       = []
