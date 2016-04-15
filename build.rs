@@ -340,7 +340,10 @@ fn check_features(infos: &Vec<(&'static str, Option<&'static str>, &'static str)
 fn main() {
 	if env::var("CARGO_FEATURE_BUILD").is_ok() {
 		println!("cargo:rustc-link-search=native={}", search().join("lib").to_string_lossy());
-		println!("cargo:rustc-link-lib=z");
+
+		if env::var("CARGO_FEATURE_ZLIB").is_ok() && cfg!(target_os = "linux") {
+			println!("cargo:rustc-link-lib=z");
+		}
 
 		if fs::metadata(&search().join("lib").join("libavutil.a")).is_ok() {
 			return;

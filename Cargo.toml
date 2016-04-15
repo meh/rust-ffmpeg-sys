@@ -88,3 +88,4 @@ swscale    = []
 
 # misc build options
 pic        = []
+zlib       = []
