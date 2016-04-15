@@ -103,8 +103,6 @@ fn build() -> io::Result<()> {
 	// do not build programs since we don't need them
 	configure.arg("--disable-programs");
 
-	configure.arg("--enable-pic");
-
 	macro_rules! switch {
 		($conf:expr, $feat:expr, $name:expr) => (
 			if env::var(concat!("CARGO_FEATURE_", $feat)).is_ok() {
@@ -202,6 +200,9 @@ fn build() -> io::Result<()> {
 	// configure external protocols
 	enable!(configure, "BUILD_LIB_SMBCLIENT", "libsmbclient");
 	enable!(configure, "BUILD_LIB_SSH", "libssh");
+
+	// configure misc build options
+	enable!(configure, "PIC", "pic");
 
 	// run ./configure
 	if !try!(configure.status()).success() {
