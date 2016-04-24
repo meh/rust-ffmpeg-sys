@@ -670,12 +670,19 @@ pub struct AVPacket {
 	pub flags: c_int,
 	pub side_data: *mut AVPacketSideData,
 	pub side_data_elems: c_int,
+
+	// duration was changed to int64_t, see https://github.com/FFmpeg/FFmpeg/commit/948f3c1
+	#[cfg(feature = "ff_api_convergence_duration_is_defined")]
+	pub duration: int64_t,
+	#[cfg(not(feature = "ff_api_convergence_duration_is_defined"))]
 	pub duration: c_int,
+
 	#[cfg(feature = "ff_api_destruct_packet")]
 	pub destruct: Option<extern fn(*mut AVPacket)>,
 	#[cfg(feature = "ff_api_destruct_packet")]
 	pub private: *mut c_void,
 	pub pos: int64_t,
+	#[cfg(feature = "ff_api_convergence_duration")]
 	pub convergence_duration: int64_t,
 }
 
