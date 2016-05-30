@@ -371,7 +371,6 @@ fn main() {
 		}
 	}
 
-
 	check_features(&vec![
 		("libavutil/avutil.h", None, "FF_API_OLD_AVOPTIONS"),
 
