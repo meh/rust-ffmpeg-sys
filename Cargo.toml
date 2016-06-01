@@ -31,6 +31,7 @@ build-license-version3 = ["build"]
 # misc
 build-pic  = ["build"]
 build-zlib = ["build"]
+build-libva = ["build"]
 
 # ssl
 build-lib-gnutls  = ["build"]

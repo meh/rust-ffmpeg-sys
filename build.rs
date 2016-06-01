@@ -348,6 +348,10 @@ fn main() {
 		if env::var("CARGO_FEATURE_BUILD_ZLIB").is_ok() && cfg!(target_os = "linux") {
 			println!("cargo:rustc-link-lib=z");
 		}
+		
+		if env::var("CARGO_FEATURE_BUILD_LIBVA").is_ok() && cfg!(target_os = "linux") {
+			println!("cargo:rustc-link-lib=va");
+		}
 
 		if fs::metadata(&search().join("lib").join("libavutil.a")).is_ok() {
 			return;
