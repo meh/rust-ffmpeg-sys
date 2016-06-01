@@ -15,6 +15,8 @@ pub use self::fft::*;
 pub use self::fft::RDFTransformType::*;
 pub use self::fft::DCTTransformType::*;
 
+mod defaults;
+
 mod dv_profile;
 pub use self::dv_profile::*;
 
