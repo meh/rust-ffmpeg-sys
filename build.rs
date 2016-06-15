@@ -291,7 +291,7 @@ fn check_features(infos: &Vec<(&'static str, Option<&'static str>, &'static str)
 		};
 
 	if !Command::new(compiler).current_dir(&out_dir)
-		.arg("-I").arg(search().join("dist").join("include").to_string_lossy().into_owned())
+		.arg("-I").arg(search().join("include").to_string_lossy().into_owned())
 		.arg("-o").arg(&executable)
 		.arg("check.c")
 		.status().expect("Command failed").success() {
@@ -362,14 +362,13 @@ fn main() {
 			println!("cargo:rustc-link-lib=z");
 		}
 
-		if fs::metadata(&search().join("lib").join("libavutil.a")).is_ok() {
-			return;
+		let build_required = fs::metadata(&search().join("lib").join("libavutil.a")).is_err();
+		if build_required {
+			fs::create_dir_all(&output()).ok().expect("failed to create build directory");
+			fetch().unwrap();
+			extract().unwrap();
+			build().unwrap();
 		}
-
-		fs::create_dir_all(&output()).ok().expect("failed to create build directory");
-		fetch().unwrap();
-		extract().unwrap();
-		build().unwrap();
 	}
 
 
