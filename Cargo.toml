@@ -29,8 +29,12 @@ build-license-nonfree  = ["build"]
 build-license-version3 = ["build"]
 
 # misc
-build-pic  = ["build"]
-build-zlib = ["build"]
+build-pic   = ["build"]
+build-zlib  = ["build"]
+build-lzma  = ["build"]
+build-bz2   = ["build"]
+build-dl    = ["build"]
+build-rt    = ["build"]
 
 # ssl
 build-lib-gnutls  = ["build"]
@@ -92,3 +96,7 @@ avresample = []
 postproc   = []
 swresample = []
 swscale    = []
+
+# misc build options
+pic        = []
+zlib       = []
