@@ -543,7 +543,7 @@ extern {
 	pub fn av_probe_input_buffer2(pb: *mut AVIOContext, fmt: *mut *mut AVInputFormat, filename: *const c_char, logctx: *mut c_void, offset: c_uint, max_probe_size: c_uint) -> c_int;
 	pub fn av_probe_input_buffer(pb: *mut AVIOContext, fmt: *mut *mut AVInputFormat, filename: *const c_char, logctx: *mut c_void, offset: c_uint, max_probe_size: c_uint) -> c_int;
 
-	pub fn avformat_open_input(ps: *mut *mut AVFormatContext, filename: *const c_char, fmt: *const AVInputFormat, options: *mut *mut AVDictionary) -> c_int;
+	pub fn avformat_open_input(ps: *mut *mut AVFormatContext, filename: *const c_char, fmt: *mut AVInputFormat, options: *mut *mut AVDictionary) -> c_int;
 	pub fn avformat_find_stream_info(ic: *mut AVFormatContext, options: *mut *mut AVDictionary) -> c_int;
 	pub fn av_find_program_from_stream(ic: *const AVFormatContext, last: *mut AVProgram, s: c_int) -> *mut AVProgram;
 	pub fn av_program_add_stream_index(ac: *mut AVFormatContext, progid: c_int, idx: c_uint);
