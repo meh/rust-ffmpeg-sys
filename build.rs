@@ -1,7 +1,9 @@
 extern crate num_cpus;
+extern crate gcc;
+extern crate pkg_config;
 
 use std::env;
-use std::fs::{self, File};
+use std::fs::{self, create_dir, File, symlink_metadata};
 use std::io::{self, Write, BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::Command;
@@ -181,8 +183,12 @@ fn build() -> io::Result<()> {
 	enable!(configure, "BUILD_PIC", "pic");
 
 	// run ./configure
-	if !try!(configure.status()).success() {
-		return Err(io::Error::new(io::ErrorKind::Other, "configure failed"));
+    let output = configure.output().expect(&format!("{:?} failed", configure));
+    if !output.status.success() {
+        println!("configure: {}", String::from_utf8_lossy(&output.stdout));
+        return Err(io::Error::new(io::ErrorKind::Other,
+                                  format!("configure failed {}",
+                                            String::from_utf8_lossy(&output.stderr))));
 	}
 
 	// run make
@@ -200,7 +206,8 @@ fn build() -> io::Result<()> {
 	Ok(())
 }
 
-fn check_features(infos: &Vec<(&'static str, Option<&'static str>, &'static str)>) {
+fn check_features(include_paths: Vec<PathBuf>,
+				  infos: &Vec<(&'static str, Option<&'static str>, &'static str)>) {
 	let mut includes_code = String::new();
 	let mut main_code = String::new();
 
@@ -256,16 +263,13 @@ fn check_features(infos: &Vec<(&'static str, Option<&'static str>, &'static str)
 	"#, includes_code=includes_code, main_code=main_code).expect("Write failed");
 
 	let executable = out_dir.join(if cfg!(windows) { "check.exe" } else { "check" });
-	let compiler =
-		if cfg!(windows) || env::var("MSYSTEM").unwrap_or("".to_string()).starts_with("MINGW32") {
-			"gcc"
-		}
-		else {
-			"cc"
-		};
+	let mut compiler = gcc::Config::new().get_compiler().to_command();
 
-	if !Command::new(compiler).current_dir(&out_dir)
-		.arg("-I").arg(search().join("include").to_string_lossy().into_owned())
+	for dir in include_paths {
+		compiler.arg("-I");
+		compiler.arg(dir.to_string_lossy().into_owned());
+	}
+	if !compiler.current_dir(&out_dir)
 		.arg("-o").arg(&executable)
 		.arg("check.c")
 		.status().expect("Command failed").success() {
@@ -317,7 +321,9 @@ fn check_features(infos: &Vec<(&'static str, Option<&'static str>, &'static str)
 }
 
 fn main() {
-	if env::var("CARGO_FEATURE_BUILD").is_ok() {
+	let statik = env::var("CARGO_FEATURE_STATIC").is_ok();
+
+	let include_paths: Vec<PathBuf> = if env::var("CARGO_FEATURE_BUILD").is_ok() {
 		println!("cargo:rustc-link-search=native={}", search().join("lib").to_string_lossy());
 
 		if env::var("CARGO_FEATURE_BUILD_ZLIB").is_ok() && cfg!(target_os = "linux") {
@@ -346,9 +352,38 @@ fn main() {
 				println!("cargo:rustc-link-lib={}", lib);
 			}
 		}
+
+		vec![search().join("include")]
+	} else {
+		// Use prebuilt library
+		if let Ok(ffmpeg_dir) = env::var("FFMPEG_DIR") {
+			let ffmpeg_dir = PathBuf::from(ffmpeg_dir);
+
+			println!("cargo:rustc-link-search=native={}",
+					 ffmpeg_dir.join("lib").to_string_lossy());
+
+			vec![ffmpeg_dir.join("include")]
+		} else {
+			// Fallback to pkg-config
+			pkg_config::Config::new()
+				.statik(statik)
+				.probe("libavcodec").unwrap().include_paths
+		}
+	};
+
+	if statik && cfg!(target_os = "macos") {
+		let frameworks = vec![
+			"AppKit", "AudioToolbox", "AVFoundation", "CoreFoundation",
+			"CoreGraphics", "CoreMedia", "CoreServices", "CoreVideo",
+			"Foundation", "OpenCL", "OpenGL", "QTKit", "QuartzCore",
+			"Security", "VideoDecodeAcceleration", "VideoToolbox"
+		];
+		for f in frameworks {
+			println!("cargo:rustc-link-lib=framework={}", f);
+		}
 	}
 
-	check_features(&vec![
+	check_features(include_paths.clone(), &vec![
 		("libavutil/avutil.h", None, "FF_API_OLD_AVOPTIONS"),
 
 		("libavutil/avutil.h", None, "FF_API_PIX_FMT"),
@@ -453,4 +488,21 @@ fn main() {
 		("libswscale/swscale.h", Some("swscale"), "FF_API_SWS_CPU_CAPS"),
 		("libswscale/swscale.h", Some("swscale"), "FF_API_ARCH_BFIN"),
 	]);
+
+	let tmp = std::env::current_dir().unwrap().join("tmp");
+	if symlink_metadata(&tmp).is_err() {
+		create_dir(&tmp).expect("Failed to create temporary output dir");
+	}
+	let mut f = File::create(tmp.join(".build"))
+		.expect("Filed to create .build");
+	let tool = gcc::Config::new().get_compiler();
+	write!(f, "{}", tool.path().to_string_lossy().into_owned())
+		.expect("failed to write cmd");
+	for arg in tool.args() {
+		write!(f, " {}", arg.to_str().unwrap()).expect("failed to write arg");
+	}
+	for dir in include_paths {
+		write!(f, " -I {}", dir.to_string_lossy().into_owned())
+			.expect("failed to write incdir");
+	}
 }
