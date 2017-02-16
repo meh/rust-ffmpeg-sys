@@ -13,7 +13,10 @@ pub struct AVDictionaryEntry {
 	pub value: *mut c_char,
 }
 
-pub type AVDictionary = c_void;
+pub struct AVDictionary {
+    pub count: usize,
+    pub elems: *mut AVDictionaryEntry
+}
 
 extern {
 	pub fn av_dict_get(m: *const AVDictionary, key: *const c_char, prev: *const AVDictionaryEntry, flags: c_int) -> *mut AVDictionaryEntry;
