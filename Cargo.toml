@@ -1,6 +1,6 @@
 [package]
 name    = "ffmpeg-sys"
-version = "3.2.0"
+version = "3.2.1"
 build   = "build.rs"
 links   = "ffmpeg"
 
@@ -15,9 +15,9 @@ keywords    = ["audio", "video"]
 libc = "0.2"
 
 [build-dependencies]
-num_cpus   = "1"
-gcc        = "0.3"
 pkg-config = "0.3"
+bindgen    = "0.25"
+regex      = "0.2"
 
 [features]
 default  = ["avcodec", "avdevice", "avfilter", "avformat", "avresample", "swresample", "swscale"]
