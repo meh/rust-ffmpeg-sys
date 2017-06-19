@@ -623,6 +623,7 @@ fn main() {
     let clang_includes = include_paths
         .iter()
         .map(|include| format!("-I{}", include.to_string_lossy()));
+
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
     // the resulting bindings.
@@ -635,6 +636,15 @@ fn main() {
         .ctypes_prefix("libc")
         .hide_type("AV_CH_LAYOUT_NATIVE")
         .hide_type("AVRational")
+        // https://github.com/servo/rust-bindgen/issues/687
+        .hide_type("FP_NAN")
+        .hide_type("FP_INFINITE")
+        .hide_type("FP_ZERO")
+        .hide_type("FP_SUBNORMAL")
+        .hide_type("FP_NORMAL")
+        // https://github.com/servo/rust-bindgen/issues/550
+        .hide_type("max_align_t")
+        .prepend_enum_name(false)
         .parse_callbacks(Box::new(IntCallbacks))
         // The input header we would like to generate
         // bindings for.
