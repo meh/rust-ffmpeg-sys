@@ -44,10 +44,11 @@ pub const AVERROR_HTTP_OTHER_4XX: c_int = FFERRTAG!(0xF8, b'4', b'X', b'X');
 pub const AVERROR_HTTP_SERVER_ERROR: c_int = FFERRTAG!(0xF8, b'5', b'X', b'X');
 
 #[inline(always)]
-pub unsafe fn av_make_error_string(errbuf: *mut c_char,
-                                   errbuf_size: size_t,
-                                   errnum: c_int)
-                                   -> *mut c_char {
+pub unsafe fn av_make_error_string(
+    errbuf: *mut c_char,
+    errbuf_size: size_t,
+    errnum: c_int,
+) -> *mut c_char {
     av_strerror(errnum, errbuf, errbuf_size);
 
     errbuf
