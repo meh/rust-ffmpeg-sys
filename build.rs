@@ -858,10 +858,6 @@ fn main() {
     // to bindgen, and lets you build up options for
     // the resulting bindings.
     let bindings = bindgen::Builder::default()
-        // Do not generate unstable Rust code that
-        // requires a nightly rustc and enabling
-        // unstable features.
-        .no_unstable_rust()
         .clang_args(clang_includes)
         .ctypes_prefix("libc")
         .hide_type("AV_CH_LAYOUT_NATIVE")
