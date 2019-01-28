@@ -905,7 +905,6 @@ fn main() {
         .blacklist_type("FP_NORMAL")
         // https://github.com/servo/rust-bindgen/issues/550
         .blacklist_type("max_align_t")
-        .rustified_enum("*")
         .prepend_enum_name(false)
         .derive_eq(true)
         .parse_callbacks(Box::new(IntCallbacks));
