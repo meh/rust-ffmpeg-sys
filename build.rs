@@ -3,16 +3,18 @@ extern crate cc;
 extern crate num_cpus;
 extern crate pkg_config;
 extern crate regex;
+extern crate version;
 
 use std::env;
 use std::fs::{self, create_dir, symlink_metadata, File};
 use std::io::{self, BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::process::Command;
-use std::str;
+use std::str::{self, FromStr};
 
 use regex::Regex;
 use bindgen::callbacks::{IntKind, ParseCallbacks};
+use version::Version;
 
 #[derive(Debug)]
 struct Library {
@@ -73,17 +75,24 @@ impl ParseCallbacks for IntCallbacks {
     }
 }
 
-fn version() -> String {
-    let major: u8 = env::var("CARGO_PKG_VERSION_MAJOR")
-        .unwrap()
-        .parse()
-        .unwrap();
-    let minor: u8 = env::var("CARGO_PKG_VERSION_MINOR")
-        .unwrap()
-        .parse()
-        .unwrap();
+fn branch_version() -> Version {
+    if let Ok(version) = env::var("FFMPEG_VERSION") {
+        Version::from_str(&version).unwrap_or(::version())
+    } else {
+        version()
+    }
+}
 
-    format!("{}.{}", major, minor)
+fn version() -> Version {
+    let major: u32 = env::var("CARGO_PKG_VERSION_MAJOR")
+        .unwrap()
+        .parse()
+        .unwrap();
+    let minor: u32 = env::var("CARGO_PKG_VERSION_MINOR")
+        .unwrap()
+        .parse()
+        .unwrap();
+    Version { major, minor, patch: 0u32 }
 }
 
 fn output() -> PathBuf {
@@ -91,7 +100,7 @@ fn output() -> PathBuf {
 }
 
 fn source() -> PathBuf {
-    output().join(format!("ffmpeg-{}", version()))
+    output().join(format!("ffmpeg-{}", branch_version()))
 }
 
 fn search() -> PathBuf {
@@ -103,16 +112,16 @@ fn search() -> PathBuf {
 }
 
 fn fetch() -> io::Result<()> {
-    let status = try!(
-        Command::new("git")
-            .current_dir(&output())
-            .arg("clone")
-            .arg("-b")
-            .arg(format!("release/{}", version()))
-            .arg("https://github.com/FFmpeg/FFmpeg")
-            .arg(format!("ffmpeg-{}", version()))
-            .status()
-    );
+    let version = branch_version();
+    println!("fetching FFmpeg {} to {}/ffmpeg-{}", version, output().to_str().unwrap(), version);
+    let status = Command::new("git")
+        .current_dir(&output())
+        .arg("clone")
+        .arg("-b")
+        .arg(format!("n{}", version))
+        .arg("https://github.com/FFmpeg/FFmpeg")
+        .arg(format!("ffmpeg-{}", version))
+        .status()?;
 
     if status.success() {
         Ok(())
