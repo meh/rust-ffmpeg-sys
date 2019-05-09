@@ -1,10 +1,10 @@
 [package]
 name    = "ffmpeg-sys"
-version = "4.0.2"
+version = "4.1.3"
 build   = "build.rs"
 links   = "ffmpeg"
 
-authors = ["meh. <meh@schizofreni.co>"]
+authors = ["meh. <meh@schizofreni.co>", "Xana Hopper <xanahopper@163.com>"]
 license = "WTFPL"
 
 description = "FFI bindings to FFmpeg"

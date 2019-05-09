@@ -73,17 +73,40 @@ impl ParseCallbacks for IntCallbacks {
     }
 }
 
-fn version() -> String {
-    let major: u8 = env::var("CARGO_PKG_VERSION_MAJOR")
-        .unwrap()
-        .parse()
-        .unwrap();
-    let minor: u8 = env::var("CARGO_PKG_VERSION_MINOR")
-        .unwrap()
-        .parse()
-        .unwrap();
+fn branch_version() -> String {
+    if let Ok(version) = env::var("FFMPEG_VERSION") {
+        if version.is_empty() {
+            ::version()
+        } else {
+            version
+        }
+    } else {
+        version()
+    }
+}
 
-    format!("{}.{}", major, minor)
+fn version() -> String {
+    let major: u32 = env::var("CARGO_PKG_VERSION_MAJOR")
+        .unwrap()
+        .parse()
+        .unwrap();
+    let minor: u32 = env::var("CARGO_PKG_VERSION_MINOR")
+        .unwrap()
+        .parse()
+        .unwrap();
+    let patch: u32 = env::var("CARGO_PKG_VERSION_PATCH")
+        .unwrap()
+        .parse()
+        .unwrap();
+    version_str(major, minor, patch)
+}
+
+fn version_str(major: u32, minor: u32, patch: u32) -> String {
+    if patch == 0 {
+        format!("{}.{}", major, minor)
+    } else {
+        format!("{}.{}.{}", major, minor, patch)
+    }
 }
 
 fn output() -> PathBuf {
@@ -91,7 +114,7 @@ fn output() -> PathBuf {
 }
 
 fn source() -> PathBuf {
-    output().join(format!("ffmpeg-{}", version()))
+    output().join(format!("ffmpeg-{}", branch_version()))
 }
 
 fn search() -> PathBuf {
@@ -103,16 +126,16 @@ fn search() -> PathBuf {
 }
 
 fn fetch() -> io::Result<()> {
-    let status = try!(
-        Command::new("git")
-            .current_dir(&output())
-            .arg("clone")
-            .arg("-b")
-            .arg(format!("release/{}", version()))
-            .arg("https://github.com/FFmpeg/FFmpeg")
-            .arg(format!("ffmpeg-{}", version()))
-            .status()
-    );
+    let version = branch_version();
+    println!("fetching FFmpeg {} to {}/ffmpeg-{}", version, output().to_str().unwrap(), version);
+    let status = Command::new("git")
+        .current_dir(&output())
+        .arg("clone")
+        .arg("-b")
+        .arg(format!("n{}", version))
+        .arg("https://github.com/FFmpeg/FFmpeg")
+        .arg(format!("ffmpeg-{}", version))
+        .status()?;
 
     if status.success() {
         Ok(())
@@ -165,14 +188,6 @@ fn build() -> io::Result<()> {
             }
         )
     }
-
-    // macro_rules! disable {
-    //     ($conf:expr, $feat:expr, $name:expr) => (
-    //         if env::var(concat!("CARGO_FEATURE_", $feat)).is_err() {
-    //             $conf.arg(concat!("--disable-", $name));
-    //         }
-    //     )
-    // }
 
     // the binary using ffmpeg-sys must comply with GPL
     switch(&mut configure, "BUILD_LICENSE_GPL", "gpl");
@@ -267,24 +282,20 @@ fn build() -> io::Result<()> {
     }
 
     // run make
-    if !try!(
-        Command::new("make")
-            .arg("-j")
-            .arg(num_cpus::get().to_string())
-            .current_dir(&source())
-            .status()
-    ).success()
+    if !Command::new("make")
+        .arg("-j")
+        .arg(num_cpus::get().to_string())
+        .current_dir(&source())
+        .status()?.success()
     {
         return Err(io::Error::new(io::ErrorKind::Other, "make failed"));
     }
 
     // run make install
-    if !try!(
-        Command::new("make")
-            .current_dir(&source())
-            .arg("install")
-            .status()
-    ).success()
+    if !Command::new("make")
+        .current_dir(&source())
+        .arg("install")
+        .status()?.success()
     {
         return Err(io::Error::new(io::ErrorKind::Other, "make install failed"));
     }
