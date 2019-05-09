@@ -20,7 +20,6 @@ cc = "1.0"
 pkg-config = "0.3"
 bindgen    = "0.32"
 regex      = "0.2"
-version = "3.0.0"
 
 [features]
 default  = ["avcodec", "avdevice", "avfilter", "avformat", "swresample", "swscale"]

@@ -3,18 +3,16 @@ extern crate cc;
 extern crate num_cpus;
 extern crate pkg_config;
 extern crate regex;
-extern crate version;
 
 use std::env;
 use std::fs::{self, create_dir, symlink_metadata, File};
 use std::io::{self, BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::process::Command;
-use std::str::{self, FromStr};
+use std::str;
 
 use regex::Regex;
 use bindgen::callbacks::{IntKind, ParseCallbacks};
-use version::Version;
 
 #[derive(Debug)]
 struct Library {
@@ -75,15 +73,19 @@ impl ParseCallbacks for IntCallbacks {
     }
 }
 
-fn branch_version() -> Version {
+fn branch_version() -> String {
     if let Ok(version) = env::var("FFMPEG_VERSION") {
-        Version::from_str(&version).unwrap_or(::version())
+        if version.is_empty() {
+            ::version()
+        } else {
+            version
+        }
     } else {
         version()
     }
 }
 
-fn version() -> Version {
+fn version() -> String {
     let major: u32 = env::var("CARGO_PKG_VERSION_MAJOR")
         .unwrap()
         .parse()
@@ -92,7 +94,19 @@ fn version() -> Version {
         .unwrap()
         .parse()
         .unwrap();
-    Version { major, minor, patch: 0u32 }
+    let patch: u32 = env::var("CARGO_PKG_VERSION_PATCH")
+        .unwrap()
+        .parse()
+        .unwrap();
+    version_str(major, minor, patch)
+}
+
+fn version_str(major: u32, minor: u32, patch: u32) -> String {
+    if patch == 0 {
+        format!("{}.{}", major, minor)
+    } else {
+        format!("{}.{}.{}", major, minor, patch)
+    }
 }
 
 fn output() -> PathBuf {
@@ -174,14 +188,6 @@ fn build() -> io::Result<()> {
             }
         )
     }
-
-     macro_rules! disable {
-         ($conf:expr, $feat:expr, $name:expr) => (
-             if env::var(concat!("CARGO_FEATURE_", $feat)).is_err() {
-                 $conf.arg(concat!("--disable-", $name));
-             }
-         )
-     }
 
     // the binary using ffmpeg-sys must comply with GPL
     switch(&mut configure, "BUILD_LICENSE_GPL", "gpl");
