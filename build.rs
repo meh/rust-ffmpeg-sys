@@ -175,13 +175,13 @@ fn build() -> io::Result<()> {
         )
     }
 
-    // macro_rules! disable {
-    //     ($conf:expr, $feat:expr, $name:expr) => (
-    //         if env::var(concat!("CARGO_FEATURE_", $feat)).is_err() {
-    //             $conf.arg(concat!("--disable-", $name));
-    //         }
-    //     )
-    // }
+     macro_rules! disable {
+         ($conf:expr, $feat:expr, $name:expr) => (
+             if env::var(concat!("CARGO_FEATURE_", $feat)).is_err() {
+                 $conf.arg(concat!("--disable-", $name));
+             }
+         )
+     }
 
     // the binary using ffmpeg-sys must comply with GPL
     switch(&mut configure, "BUILD_LICENSE_GPL", "gpl");
@@ -276,24 +276,20 @@ fn build() -> io::Result<()> {
     }
 
     // run make
-    if !try!(
-        Command::new("make")
-            .arg("-j")
-            .arg(num_cpus::get().to_string())
-            .current_dir(&source())
-            .status()
-    ).success()
+    if !Command::new("make")
+        .arg("-j")
+        .arg(num_cpus::get().to_string())
+        .current_dir(&source())
+        .status()?.success()
     {
         return Err(io::Error::new(io::ErrorKind::Other, "make failed"));
     }
 
     // run make install
-    if !try!(
-        Command::new("make")
-            .current_dir(&source())
-            .arg("install")
-            .status()
-    ).success()
+    if !Command::new("make")
+        .current_dir(&source())
+        .arg("install")
+        .status()?.success()
     {
         return Err(io::Error::new(io::ErrorKind::Other, "make install failed"));
     }
