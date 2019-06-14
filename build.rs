@@ -14,6 +14,8 @@ use std::str;
 use regex::Regex;
 use bindgen::callbacks::{IntKind, ParseCallbacks};
 
+use std::error::Error;
+
 #[derive(Debug)]
 struct Library {
     name: &'static str,
@@ -102,6 +104,95 @@ fn search() -> PathBuf {
     absolute
 }
 
+fn delete_ffmpeg() {
+    std::fs::remove_dir_all(&source());
+}
+
+fn delete_build() {
+    std::fs::remove_dir_all(&search());
+}
+
+fn force_ffmpeg_clone() -> io::Result<()> {
+    let s = source();
+    let out = Command::new("git")
+        .current_dir(&s)
+        .arg("remove")
+        .arg("-v")
+        .arg("get-url")
+        .arg("origin")
+        .output();
+
+    if out.is_err() {
+        delete_ffmpeg();
+        delete_build();
+        fetch()
+    } else {
+        let o = out.unwrap().stdout;
+        let out = str::from_utf8(&o);
+        if out.is_err() {
+            return Err(io::Error::new(io::ErrorKind::Other, out.err().unwrap().description()));
+        }
+
+        if out.unwrap().trim().to_lowercase() == "https://github.com/ffmpeg/ffmpeg" {
+            let out = Command::new("git")
+                .current_dir(&s)
+                .arg("describe")
+                .arg("--all")
+                .output();
+
+            if out.is_err() {
+                delete_ffmpeg();
+                delete_build();
+                fetch()
+            } else {
+                let o = out.unwrap().stdout;
+                let out = str::from_utf8(&o);
+                if out.is_err() {
+                    return Err(io::Error::new(io::ErrorKind::Other, out.err().unwrap().description()));
+                }
+
+                if out.unwrap().trim() != format!("tags/n{}", env!("CARGO_PKG_VERSION")) {
+                    delete_build();
+
+                    let status = Command::new("git")
+                        .current_dir(&s)
+                        .arg("reset")
+                        .arg("--hard")
+                        .status()?;
+
+                    if status.success() {
+                        checkout_tag()
+                    } else {
+                        Err(io::Error::new(io::ErrorKind::Other, "reset failed"))
+                    }
+                } else {
+                    Ok(())
+                }
+            }
+        } else {
+            delete_ffmpeg();
+            delete_build();
+            fetch()
+        }
+    }
+}
+
+fn checkout_tag() -> io::Result<()> {
+    let status = try!(
+        Command::new("git")
+            .current_dir(&source())
+            .arg("checkout")
+            .arg(format!("tags/n{}", env!("CARGO_PKG_VERSION")))
+            .status()
+    );
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err(io::Error::new(io::ErrorKind::Other, "checkout failed"))
+    }
+}
+
 fn fetch() -> io::Result<()> {
     let status = try!(
         Command::new("git")
@@ -115,7 +206,7 @@ fn fetch() -> io::Result<()> {
     );
 
     if status.success() {
-        Ok(())
+        checkout_tag()
     } else {
         Err(io::Error::new(io::ErrorKind::Other, "fetch failed"))
     }
@@ -477,11 +568,12 @@ fn main() {
             search().join("lib").to_string_lossy()
         );
         link_to_libraries(statik);
+        force_ffmpeg_clone().unwrap();
+
         if fs::metadata(&search().join("lib").join("libavutil.a")).is_err() {
             fs::create_dir_all(&output())
                 .ok()
                 .expect("failed to create build directory");
-            fetch().unwrap();
             build().unwrap();
         }
 
