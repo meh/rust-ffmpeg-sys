@@ -1,5 +1,5 @@
 [package]
-name    = "ffmpeg-sys"
+name    = "stainless-ffmpeg-sys"
 version = "4.0.2"
 build   = "build.rs"
 links   = "ffmpeg"
@@ -8,7 +8,7 @@ authors = ["meh. <meh@schizofreni.co>"]
 license = "WTFPL"
 
 description = "FFI bindings to FFmpeg"
-repository  = "https://github.com/meh/rust-ffmpeg-sys"
+repository  = "https://github.com/media-io/rust-ffmpeg-sys"
 keywords    = ["audio", "video"]
 
 [dependencies]
