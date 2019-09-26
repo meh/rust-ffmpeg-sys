@@ -1,19 +1,25 @@
 sudo: required
+
 language: rust
+
 rust:
   - stable
   - beta
   - nightly
+
 os:
   - linux
   - osx
+
 matrix:
   allow_failures:
-    - rust: nightly
+    - rust: nightly beta
+
 addons:
   apt:
     packages:
       - build-essential
+
 before_install:
   - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then ./.travis/install_linux.sh; fi
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then brew update; fi
