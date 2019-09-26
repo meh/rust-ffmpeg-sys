@@ -13,7 +13,8 @@ os:
 
 matrix:
   allow_failures:
-    - rust: nightly beta
+    - rust: nightly
+    - rust: beta
 
 addons:
   apt:
