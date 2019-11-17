@@ -103,16 +103,14 @@ fn search() -> PathBuf {
 }
 
 fn fetch() -> io::Result<()> {
-    let status = try!(
-        Command::new("git")
+    let status = Command::new("git")
             .current_dir(&output())
             .arg("clone")
             .arg("-b")
             .arg(format!("release/{}", version()))
             .arg("https://github.com/FFmpeg/FFmpeg")
             .arg(format!("ffmpeg-{}", version()))
-            .status()
-    );
+            .status()?;
 
     if status.success() {
         Ok(())
@@ -267,24 +265,20 @@ fn build() -> io::Result<()> {
     }
 
     // run make
-    if !try!(
-        Command::new("make")
+    if Command::new("make")
             .arg("-j")
             .arg(num_cpus::get().to_string())
             .current_dir(&source())
-            .status()
-    ).success()
+            .status()?.success()
     {
         return Err(io::Error::new(io::ErrorKind::Other, "make failed"));
     }
 
     // run make install
-    if !try!(
-        Command::new("make")
+    if Command::new("make")
             .current_dir(&source())
             .arg("install")
-            .status()
-    ).success()
+            .status()?.success()
     {
         return Err(io::Error::new(io::ErrorKind::Other, "make install failed"));
     }
@@ -896,24 +890,34 @@ fn main() {
         .iter()
         .map(|include| format!("-I{}", include.to_string_lossy()));
 
+    // https://github.com/servo/rust-bindgen/issues/687
+    let ignored_macros = IgnoreMacros(
+        vec![
+            "FP_INFINITE".into(),
+            "FP_NAN".into(),
+            "FP_NORMAL".into(),
+            "FP_SUBNORMAL".into(),
+            "FP_ZERO".into(),
+            "IPPORT_RESERVED".into(),
+            // https://github.com/servo/rust-bindgen/issues/550
+            "max_align_t".into(),
+        ]
+        .into_iter()
+        .collect(),
+    );
+
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
     // the resulting bindings.
     let mut builder = bindgen::Builder::default()
         .clang_args(clang_includes)
         .ctypes_prefix("libc")
-        // https://github.com/servo/rust-bindgen/issues/687
-        .blacklist_type("FP_NAN")
-        .blacklist_type("FP_INFINITE")
-        .blacklist_type("FP_ZERO")
-        .blacklist_type("FP_SUBNORMAL")
-        .blacklist_type("FP_NORMAL")
-        // https://github.com/servo/rust-bindgen/issues/550
-        .blacklist_type("max_align_t")
         .rustified_enum("*")
         .prepend_enum_name(false)
         .derive_eq(true)
-        .parse_callbacks(Box::new(IntCallbacks));
+        .parse_callbacks(Box::new(IntCallbacks))
+        .parse_callbacks(Box::new(ignored_macros))
+        ;
 
     // The input headers we would like to generate
     // bindings for.
@@ -1021,4 +1025,17 @@ fn main() {
     bindings
         .write_to_file(output().join("bindings.rs"))
         .expect("Couldn't write bindings!");
+}
+
+#[derive(Debug)]
+struct IgnoreMacros(std::collections::HashSet<String>);
+
+impl bindgen::callbacks::ParseCallbacks for IgnoreMacros {
+    fn will_parse_macro(&self, name: &str) -> bindgen::callbacks::MacroParsingBehavior {
+        if self.0.contains(name) {
+            bindgen::callbacks::MacroParsingBehavior::Ignore
+        } else {
+            bindgen::callbacks::MacroParsingBehavior::Default
+        }
+    }
 }
