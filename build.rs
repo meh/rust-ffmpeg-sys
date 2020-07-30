@@ -706,7 +706,6 @@ fn main() {
             ),
             ("libavcodec/avcodec.h", Some("avcodec"), "FF_API_CODEC_PKT"),
             ("libavcodec/avcodec.h", Some("avcodec"), "FF_API_ARCH_ALPHA"),
-            ("libavcodec/avcodec.h", Some("avcodec"), "FF_API_XVMC"),
             ("libavcodec/avcodec.h", Some("avcodec"), "FF_API_ERROR_RATE"),
             (
                 "libavcodec/avcodec.h",
