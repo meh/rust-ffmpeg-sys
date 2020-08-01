@@ -493,6 +493,7 @@ fn check_features(
                         r#"cargo:rustc-cfg=feature="{}""#,
                         &search_str[1..(search_str.len() - 1)]
                     );
+                    println!(r#"cargo:{}=true"#, &search_str[1..(search_str.len() - 1)]);
                 }
             }
         }
