@@ -605,8 +605,7 @@ fn main() {
         pkg_config::Config::new()
             .statik(statik)
             .probe("libavutil")
-            .unwrap()
-            .include_paths;
+            .unwrap();
 
         let libs = vec![
             ("libavformat", "AVFORMAT"),
@@ -622,8 +621,7 @@ fn main() {
                 pkg_config::Config::new()
                     .statik(statik)
                     .probe(lib_name)
-                    .unwrap()
-                    .include_paths;
+                    .unwrap();
             }
         }
 
