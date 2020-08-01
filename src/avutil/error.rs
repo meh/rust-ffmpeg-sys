@@ -11,8 +11,9 @@ pub fn AVUNERROR(e: c_int) -> c_int {
 }
 
 macro_rules! FFERRTAG {
-	($a:expr, $b:expr, $c:expr, $d:expr) =>
-		(-MKTAG!($a, $b, $c, $d) as c_int)
+    ($a:expr, $b:expr, $c:expr, $d:expr) => {
+        -MKTAG!($a, $b, $c, $d) as c_int
+    };
 }
 
 pub const AVERROR_BSF_NOT_FOUND: c_int = FFERRTAG!(0xF8, b'B', b'S', b'F');
