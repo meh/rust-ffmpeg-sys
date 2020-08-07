@@ -206,14 +206,19 @@ fn build() -> io::Result<()> {
         // and this is a messy way of reusing that logic.
         let cc = cc::Build::new();
         let compiler = cc.get_compiler();
-        let compiler = compiler.path()
-            .file_stem().unwrap().to_str().unwrap();
+        let compiler = compiler.path().file_stem().unwrap().to_str().unwrap();
         let suffix_pos = compiler.rfind('-').unwrap(); // cut off "-gcc"
         let prefix = compiler[0..suffix_pos].trim_end_matches("-wr"); // "wr-c++" compiler
 
         configure.arg(format!("--cross-prefix={}-", prefix));
-        configure.arg(format!("--arch={}", env::var("CARGO_CFG_TARGET_ARCH").unwrap()));
-        configure.arg(format!("--target_os={}", env::var("CARGO_CFG_TARGET_OS").unwrap()));
+        configure.arg(format!(
+            "--arch={}",
+            env::var("CARGO_CFG_TARGET_ARCH").unwrap()
+        ));
+        configure.arg(format!(
+            "--target_os={}",
+            env::var("CARGO_CFG_TARGET_OS").unwrap()
+        ));
     }
 
     // control debug build
@@ -424,7 +429,8 @@ fn check_features(
 
         main_code.push_str(&format!(
             r#"printf("[{var}]%d%d\n", {var}, {var}_is_defined);
-            "#, var = var
+            "#,
+            var = var
         ));
     }
 
@@ -467,7 +473,8 @@ fn check_features(
     let executable = out_dir.join(if cfg!(windows) { "check.exe" } else { "check" });
     let mut compiler = cc::Build::new()
         .target(&env::var("HOST").unwrap()) // don't cross-compile this
-        .get_compiler().to_command();
+        .get_compiler()
+        .to_command();
 
     for dir in include_paths {
         compiler.arg("-I");
@@ -490,7 +497,12 @@ fn check_features(
         .output()
         .expect("Check failed");
     if !check_output.status.success() {
-        panic!("{} failed: {}\n{}", executable.display(), String::from_utf8_lossy(&check_output.stdout), String::from_utf8_lossy(&check_output.stderr));
+        panic!(
+            "{} failed: {}\n{}",
+            executable.display(),
+            String::from_utf8_lossy(&check_output.stdout),
+            String::from_utf8_lossy(&check_output.stderr)
+        );
     }
 
     let stdout = str::from_utf8(&check_output.stdout).unwrap();
@@ -505,8 +517,10 @@ fn check_features(
         }
 
         let var_str = format!("[{var}]", var = var);
-        let pos = var_str.len() + stdout.find(&var_str)
-            .unwrap_or_else(|| panic!("Variable '{}' not found in stdout output", var_str));
+        let pos = var_str.len()
+            + stdout
+                .find(&var_str)
+                .unwrap_or_else(|| panic!("Variable '{}' not found in stdout output", var_str));
         if &stdout[pos..pos + 1] == "1" {
             println!(r#"cargo:rustc-cfg=feature="{}""#, var.to_lowercase());
             println!(r#"cargo:{}=true"#, var.to_lowercase());
