@@ -320,6 +320,7 @@ fn build() -> io::Result<()> {
     enable!(configure, "BUILD_LIB_XVID", "libxvid");
 
     // other external libraries
+    enable!(configure, "BUILD_LIB_DRM", "libdrm");
     enable!(configure, "BUILD_NVENC", "nvenc");
 
     // configure external protocols
@@ -1184,6 +1185,8 @@ fn main() {
         .header(search_include(&include_paths, "libavutil/frame.h"))
         .header(search_include(&include_paths, "libavutil/hash.h"))
         .header(search_include(&include_paths, "libavutil/hmac.h"))
+        .header(search_include(&include_paths, "libavutil/hwcontext.h"))
+        .header(search_include(&include_paths, "libavutil/hwcontext_drm.h"))
         .header(search_include(&include_paths, "libavutil/imgutils.h"))
         .header(search_include(&include_paths, "libavutil/lfg.h"))
         .header(search_include(&include_paths, "libavutil/log.h"))
