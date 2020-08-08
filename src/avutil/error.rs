@@ -1,12 +1,20 @@
 use libc::{c_char, c_int, size_t};
 
+// Note: FFmpeg's AVERROR and AVUNERROR are conditionally defined based on
+// whether EDOM is positive, claiming that "Some platforms have E* and errno
+// already negated". This can be traced to a commit in 2007 where "some
+// platforms" were specifically identified as BeOS (so maybe also Haiku?):
+// https://github.com/FFmpeg/FFmpeg/commit/8fa36ae09dddb1b639b4df5d505c0dbcf4e916e4
+// constness is more valuable than BeOS support, so if someone really needs it,
+// send a patch with cfg_attr.
+
 #[inline(always)]
-pub fn AVERROR(e: c_int) -> c_int {
+pub const fn AVERROR(e: c_int) -> c_int {
     -e
 }
 
 #[inline(always)]
-pub fn AVUNERROR(e: c_int) -> c_int {
+pub const fn AVUNERROR(e: c_int) -> c_int {
     -e
 }
 
