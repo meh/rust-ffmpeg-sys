@@ -1074,6 +1074,7 @@ fn thread_main() {
     // the resulting bindings.
     let mut builder = bindgen::Builder::default()
         .clang_args(clang_includes)
+        .clang_arg("-fvisibility=default")
         .ctypes_prefix("libc")
         // https://github.com/rust-lang/rust-bindgen/issues/550
         .blocklist_type("max_align_t")
