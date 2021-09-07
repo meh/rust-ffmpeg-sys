@@ -631,6 +631,7 @@ fn main() {
 
 fn thread_main() {
     let statik = env::var("CARGO_FEATURE_STATIC").is_ok();
+    let is_wasm_emscripten = env::var("TARGET").unwrap() == "wasm32-unknown-emscripten";
 
     let include_paths: Vec<PathBuf> = if env::var("CARGO_FEATURE_BUILD").is_ok() {
         println!(
@@ -1169,6 +1170,13 @@ fn thread_main() {
         .derive_eq(true)
         .size_t_is_usize(true)
         .parse_callbacks(Box::new(Callbacks));
+
+    if is_wasm_emscripten {
+        let emsdk_path = PathBuf::from(env::var("EMSDK").unwrap());
+        let emsdk_sysroot = emsdk_path.join("upstream/emscripten/cache/sysroot");
+        builder = builder
+            .clang_arg(format!("--sysroot={}", emsdk_sysroot.to_string_lossy()));
+    }
 
     // The input headers we would like to generate
     // bindings for.
