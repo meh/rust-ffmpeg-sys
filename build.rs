@@ -674,6 +674,7 @@ fn main() {
 fn thread_main() {
     let statik = env::var("CARGO_FEATURE_STATIC").is_ok();
     let target = env::var("TARGET").unwrap();
+    let is_wasm_emscripten = target == "wasm32-unknown-emscripten";
     let target_os = os_from_triple(&target); // it's different than Rust's target_os! but ./configure likes these better
 
     let include_paths: Vec<PathBuf> = if env::var("CARGO_FEATURE_BUILD").is_ok() {
@@ -1111,6 +1112,7 @@ fn thread_main() {
     // the resulting bindings.
     let mut builder = bindgen::Builder::default()
         .clang_args(clang_includes)
+        .clang_arg("-fvisibility=default")
         .ctypes_prefix("libc")
         // https://github.com/rust-lang/rust-bindgen/issues/550
         .blocklist_type("max_align_t")
@@ -1209,6 +1211,13 @@ fn thread_main() {
         .derive_eq(true)
         .size_t_is_usize(true)
         .parse_callbacks(Box::new(Callbacks));
+
+    if is_wasm_emscripten {
+        let emsdk_path = PathBuf::from(env::var("EMSDK").unwrap());
+        let emsdk_sysroot = emsdk_path.join("upstream/emscripten/cache/sysroot");
+        builder = builder
+            .clang_arg(format!("--sysroot={}", emsdk_sysroot.to_string_lossy()));
+    }
 
     // The input headers we would like to generate
     // bindings for.
